@@ -1,0 +1,52 @@
+<view class="index">
+    <view class="head">
+        <view class="title">Podoon小程序</view>
+        <view class="desc">这是展示Podoon小程序的DEMO。</view>
+    </view>
+
+    <view class="body">
+        <view class="widgets">
+            <view wx:for="{{device_list}}" class="widgets__item">
+                <view id="{{item.uuid}}" class="widgets__info widgets__info_show" bindtap="widgetsToggle">
+                    <text class="widgets__info-name">{{item.name}}(rssi:{{item.rssi}})</text>
+                    <image class="widgets__info-img" src="resources/arrow.png" background-size="cover" />
+                </view>
+            </view>
+            <view class="widgets__item">
+                <view class="widgets__list {{dataShow ? 'widgets__list_show' : ''}}">
+                    <view class="widget">
+                        <text class="widgets__info-name">步数</text>
+                        <text class="widgets__info-data">{{stepCount}} 步</text>
+                        <image class="widget__arrow" src="resources/kind/view.png" background-size="cover" />
+                        <view class="widget__line"></view>
+                    </view>
+                    <view class="widget">
+                        <text class="widgets__info-name">步频</text>
+                        <text class="widgets__info-data">{{stepFreq}} 步/秒</text>
+                        <image class="widget__arrow" src="resources/kind/nav.png" background-size="cover" />
+                        <view class="widget__line"></view>
+                    </view>
+                    <view class="widget">
+                        <text class="widgets__info-name">触地时间</text>
+                        <text class="widgets__info-data">{{gct}} ms</text>
+                        <image class="widget__arrow" src="resources/kind/map.png" background-size="cover" />
+                        <view class="widget__line"></view>
+                    </view>
+                    <view class="widget">
+                        <text class="widgets__info-name">着地方式</text>
+                        <text class="widgets__info-data">{{touchType}}</text>
+                        <image class="widget__arrow" src="resources/kind/content.png" background-size="cover" />
+                        <view class="widget__line"></view>
+                    </view>
+                    <view class="widget">
+                        <text class="widgets__info-name">内旋类型</text>
+                        <text class="widgets__info-data">{{pronationType}}</text>
+                        <image class="widget__arrow" src="resources/kind/form.png" background-size="cover" />
+                        <view class="widget__line"></view>
+                    </view>
+                    <button class="{{isConntected ? 'running_btn_show':'running_btn_hidden'}}" bindtap="bindButtonTap">{{isRunning ? '结束运动' : '开始运动'}}</button>
+                </view>
+            </view>
+        </view>
+    </view>
+</view>
