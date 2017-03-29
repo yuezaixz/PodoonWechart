@@ -12,6 +12,7 @@
                     <image class="widgets__info-img" src="resources/arrow.png" background-size="cover" />
                 </view>
             </view>
+            <button class="{{!dataShow ? 'running_btn_show':'running_btn_hidden'}}" bindtap="bindSearchButtonTap">搜索Podoon</button>
             <view class="widgets__item">
                 <view class="widgets__list {{dataShow ? 'widgets__list_show' : ''}}">
                     <view class="widget">

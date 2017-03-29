@@ -31,10 +31,57 @@ var startRunning =  function(deviceId, serviceId, characteristicId, value) {
       value: char2buf(value),
       success: function (res) {
         console.log('writeBLECharacteristicValue success', res.errMsg)
-        //TODO 提示连接成功
       }
     })
   }
+}
+
+function search(that) {
+  wx.showToast({
+    title: '搜索中',
+    icon: 'loading',
+    duration: 5000
+  })
+  wx.startBluetoothDevicesDiscovery({
+    services: ['00001801-0000-1000-8000-00805F9B34FB'],
+    success: function (res2) {
+      wx.onBluetoothDeviceFound(function(res) {
+        console.log(res['devices'][0])
+        //测试用过滤代码
+        if (res['devices'][0].RSSI > 0 ) {
+          return
+        }
+        // if ('3ECDAA79-B231-40BA-B9BB-23AC99B0B6CC' != res['devices'][0].deviceId) {
+        //   return
+        // }
+
+        var device_list = that.data.device_list
+        var hadFound = false
+
+        for(var deviceIndex = 0; deviceIndex < device_list.length; ++deviceIndex) {
+          var device = device_list[deviceIndex]
+          if (res['devices'][0].deviceId == device.uuid) {
+            hadFound = true
+            console.log('更新RSSI:',device.uuid)
+            device_list[deviceIndex].rssi = res['devices'][0].RSSI
+          }
+        }
+        if (!hadFound) {
+          if (res['devices'][0].RSSI > -70) {
+            device_list.push({
+              name:res['devices'][0].name,
+              rssi:res['devices'][0].RSSI,
+              uuid:res['devices'][0].deviceId
+            })
+          }
+        }
+        wx.hideToast()
+        that.setData({
+          device_list:device_list
+        })
+      })
+    }
+  })
 }
 
 var pageData = {
@@ -74,39 +121,7 @@ var pageData = {
         //     console.log(res)
         //   }
         // })
-        wx.startBluetoothDevicesDiscovery({
-          services: ['00001801-0000-1000-8000-00805F9B34FB'],
-          success: function (res2) {
-            wx.onBluetoothDeviceFound(function(res) {
-              //测试用过滤代码
-              if ('3ECDAA79-B231-40BA-B9BB-23AC99B0B6CC' != res['devices'][0].deviceId) {
-                return
-              }
-
-              var device_list = that.data.device_list
-              var hadFound = false
-
-              for(var deviceIndex = 0; deviceIndex < device_list.length; ++deviceIndex) {
-                var device = device_list[deviceIndex]
-                if (res['devices'][0].deviceId == device.uuid) {
-                  hadFound = true
-                  device.rssi = res['devices'][0].RSSI
-                }
-              }
-              if (!hadFound) {
-                device_list.push({
-                  name:res['devices'][0].name,
-                  rssi:res['devices'][0].RSSI,
-                  uuid:res['devices'][0].deviceId
-                })
-              }
-              that.setData({
-                device_list:device_list
-              })
-              console.log(res['devices'][0])
-            })
-          }
-        })
+        search(that)
 
       }
     })
@@ -188,6 +203,10 @@ var pageData = {
   }
 }
 
+pageData.bindSearchButtonTap = function (e) {
+  search(this)
+}
+
 pageData.bindButtonTap = function (e) {
   if (!isRunning) {
     startRunning(deviceId,serviceId,characteristicId,'ES')
@@ -205,7 +224,12 @@ pageData.widgetsToggle = function (e) {
       console.log(res)
     }
   })
-  //TODO 提示连接中
+  
+  wx.showToast({
+    title: '连接中',
+    icon: 'loading',
+    duration: 2000
+  })
   console.log('连接中'+e.currentTarget.id)
   var that = this
 
@@ -213,7 +237,15 @@ pageData.widgetsToggle = function (e) {
     // 这里的 deviceId 需要在上面的 getBluetoothDevices 或 onBluetoothDeviceFound 接口中获取
     deviceId: e.currentTarget.id,
     success: function (res) {
-      //TODO 提示连接失败
+      if(res.errMsg.indexOf("ok") < 0 ) { 
+        wx.showToast({
+          title: '连接失败',
+          icon: 'loading',
+          //image: '', //TODO error的图片
+          duration: 2000
+        })
+        return
+      } 
       deviceId = e.currentTarget.id
       var data = {device_list:[]}
       data['dataShow'] = true
@@ -239,6 +271,11 @@ pageData.widgetsToggle = function (e) {
                       // startRunning(e.currentTarget.id, service.uuid, charcterRes.uuid, 'ES')
                       if (isNotify) {
                         that.setData({isConntected:true})
+                        wx.showToast({
+                          title: '连接成功',
+                          icon: 'success',
+                          duration: 2000
+                        })
                       }
                     } else {
                       wx.notifyBLECharacteristicValueChanged({
@@ -256,6 +293,12 @@ pageData.widgetsToggle = function (e) {
                           // startRunning(e.currentTarget.id, service.uuid, charcterRes.uuid, 'E')
                           if (writeCharacteristics) {
                             that.setData({isConntected:true})
+
+                            wx.showToast({
+                              title: '连接成功',
+                              icon: 'success',
+                              duration: 2000
+                            })
                           }
                         }
                       })
