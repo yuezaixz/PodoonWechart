@@ -7,6 +7,7 @@ var deviceId = null
 var serviceId = null
 var characteristicId ='6E400002-B5A3-F393-E0A9-E50E24DCCA9E'
 var isRunning = false
+var isConnecting = false
 
 function char2buf(str){
   var out = new ArrayBuffer(str.length);
@@ -85,7 +86,6 @@ function search(that) {
 
 var pageData = {
   data: {
-    motto: 'Hello World',
     device_list:[],
     stepCount:0,
     gct:0,
@@ -93,8 +93,7 @@ var pageData = {
     touchType: '未知',
     pronationType: '未知',
     isConntected: false,
-    isRunning: false,
-    userInfo: {}
+    isRunning: false
   },
   //事件处理函数
   bindViewTap: function() {
@@ -203,7 +202,9 @@ var pageData = {
 }
 
 pageData.bindSearchButtonTap = function (e) {
-  search(this)
+  if (!isConnecting) {
+    search(this)
+  }
 }
 
 pageData.bindButtonTap = function (e) {
@@ -223,9 +224,9 @@ pageData.widgetsToggle = function (e) {
       console.log(res)
     }
   })
-
+  isConnecting = true
   wx.showLoading({
-    title: '加载中',
+    title: '连接中',
   })
   console.log('连接中'+e.currentTarget.id)
   var that = this
@@ -235,6 +236,7 @@ pageData.widgetsToggle = function (e) {
     deviceId: e.currentTarget.id,
     success: function (res) {
       if(res.errMsg.indexOf("ok") < 0 ) { 
+        isConnecting = false
         wx.hideLoading()
         wx.showToast({
           title: '连接失败',
@@ -269,6 +271,7 @@ pageData.widgetsToggle = function (e) {
                       // startRunning(e.currentTarget.id, service.uuid, charcterRes.uuid, 'ES')
                       if (isNotify) {
                         that.setData({isConntected:true})
+                        isConnecting = false
                         wx.hideLoading()
                         wx.showToast({
                           title: '连接成功',
@@ -292,6 +295,7 @@ pageData.widgetsToggle = function (e) {
                           // startRunning(e.currentTarget.id, service.uuid, charcterRes.uuid, 'E')
                           if (writeCharacteristics) {
                             that.setData({isConntected:true})
+                            isConnecting = false
                             wx.hideLoading()
                             wx.showToast({
                               title: '连接成功',
