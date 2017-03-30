@@ -37,11 +37,10 @@ var startRunning =  function(deviceId, serviceId, characteristicId, value) {
 }
 
 function search(that) {
-  wx.showToast({
+  wx.showLoading({
     title: '搜索中',
-    icon: 'loading',
-    duration: 5000
   })
+
   wx.startBluetoothDevicesDiscovery({
     services: ['00001801-0000-1000-8000-00805F9B34FB'],
     success: function (res2) {
@@ -75,7 +74,7 @@ function search(that) {
             })
           }
         }
-        wx.hideToast()
+        wx.hideLoading()
         that.setData({
           device_list:device_list
         })
@@ -224,11 +223,9 @@ pageData.widgetsToggle = function (e) {
       console.log(res)
     }
   })
-  
-  wx.showToast({
-    title: '连接中',
-    icon: 'loading',
-    duration: 2000
+
+  wx.showLoading({
+    title: '加载中',
   })
   console.log('连接中'+e.currentTarget.id)
   var that = this
@@ -238,6 +235,7 @@ pageData.widgetsToggle = function (e) {
     deviceId: e.currentTarget.id,
     success: function (res) {
       if(res.errMsg.indexOf("ok") < 0 ) { 
+        wx.hideLoading()
         wx.showToast({
           title: '连接失败',
           icon: 'loading',
@@ -271,6 +269,7 @@ pageData.widgetsToggle = function (e) {
                       // startRunning(e.currentTarget.id, service.uuid, charcterRes.uuid, 'ES')
                       if (isNotify) {
                         that.setData({isConntected:true})
+                        wx.hideLoading()
                         wx.showToast({
                           title: '连接成功',
                           icon: 'success',
@@ -293,7 +292,7 @@ pageData.widgetsToggle = function (e) {
                           // startRunning(e.currentTarget.id, service.uuid, charcterRes.uuid, 'E')
                           if (writeCharacteristics) {
                             that.setData({isConntected:true})
-
+                            wx.hideLoading()
                             wx.showToast({
                               title: '连接成功',
                               icon: 'success',
