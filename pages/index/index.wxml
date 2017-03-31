@@ -16,6 +16,12 @@
             <view class="widgets__item">
                 <view class="widgets__list {{dataShow ? 'widgets__list_show' : ''}}">
                     <view class="widget">
+                        <text class="widgets__info-name">距离</text>
+                        <text class="widgets__info-data">{{distance}} 米</text>
+                        <image class="widget__arrow" src="resources/kind/canvas.png" background-size="cover" />
+                        <view class="widget__line"></view>
+                    </view>
+                    <view class="widget">
                         <text class="widgets__info-name">步数</text>
                         <text class="widgets__info-data">{{stepCount}} 步</text>
                         <image class="widget__arrow" src="resources/kind/view.png" background-size="cover" />

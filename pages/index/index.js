@@ -19,9 +19,34 @@ function char2buf(str){
   return out;
 }
 
+//This function takes in latitude and longitude of two location and returns the distance between them as the crow flies (in km)
+function calcCrow(lat1, lon1, lat2, lon2) 
+{
+  var R = 6371; // km
+  var dLat = toRad(lat2-lat1);
+  var dLon = toRad(lon2-lon1);
+  var lat1 = toRad(lat1);
+  var lat2 = toRad(lat2);
+
+  var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2); 
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+  var d = R * c;
+  return d;
+}
+
+// Converts numeric degrees to radians
+function toRad(Value) 
+{
+    return Value * Math.PI / 180
+}
+
+// var startTime = 0
+
 var startRunning =  function(deviceId, serviceId, characteristicId, value) {
   if (writeCharacteristics && isNotify) {
-    console.log(char2buf(value))
+    // startTime = Date.parse(new Date())
+    setInterval(getLocation,5000)
     wx.writeBLECharacteristicValue({
       // 这里的 deviceId 需要在上面的 getBluetoothDevices 或 onBluetoothDeviceFound 接口中获取
       deviceId: deviceId,
@@ -35,6 +60,30 @@ var startRunning =  function(deviceId, serviceId, characteristicId, value) {
       }
     })
   }
+}
+
+var locations = []
+var lastLocation = null
+var totalDistance = 0
+
+function getLocation(){
+  wx.getLocation({
+    // type: 'gcj02', //返回可以用于wx.openLocation的经纬度
+    type: 'wgs84',
+    success: function(res) {
+      var latitude = res.latitude
+      var longitude = res.longitude
+      if (lastLocation) {
+        totalDistance += calcCrow(lastLocation.longitude, lastLocation.latitude, longitude, latitude) * 1000
+        console.log("移动"+totalDistance+"米")
+      }
+      lastLocation = {
+        latitude:latitude,
+        longitude:longitude
+      }
+      locations.push(lastLocation)
+    }
+  })
 }
 
 function search(that) {
@@ -87,6 +136,7 @@ function search(that) {
 var pageData = {
   data: {
     device_list:[],
+    distance:0,
     stepCount:0,
     gct:0,
     stepFreq:0,
@@ -104,6 +154,7 @@ var pageData = {
   onLoad: function () {
     console.log('onLoad')
     var that = this
+
     //调用应用实例的方法获取全局数据
     app.getUserInfo(function(userInfo){
       //更新数据
@@ -186,6 +237,7 @@ var pageData = {
         var touchType = ['未知','前掌着地','全掌着地','后跟着地','纯前掌着地'][touchTypeEnum]
         var pronationType = ['未知','内旋过度','内旋正常','内旋不足'][pronationTypeEnum]
         var data = {
+          distance:parseInt(totalDistance),
           stepCount:stepCount,
           gct:gct,
           stepFreq:stepFreq,
