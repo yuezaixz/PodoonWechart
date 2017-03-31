@@ -1,7 +1,13 @@
 <view class="index">
     <view class="head">
-        <view class="title">Podoon智能鞋垫</view>
-        <view class="desc">连接Podoon后开始记录运动数据</view>
+        <view  bindtap="bindViewTap" class="userinfo">
+            <image class="userinfo-avatar" src="{{userInfo.avatarUrl}}" background-size="cover"></image>
+            <text class="userinfo-nickname">{{userInfo.nickName}}</text>
+        </view>
+        <view class="titleinfo">
+            <view class="title">Podoon智能鞋垫</view>
+            <view class="desc">连接Podoon后开始记录运动数据</view>
+        </view>
     </view>
 
     <view class="body">
