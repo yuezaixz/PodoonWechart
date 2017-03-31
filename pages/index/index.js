@@ -3,11 +3,18 @@
 var app = getApp()
 var writeCharacteristics = null
 var isNotify = false
-var deviceId = null
+var currentDeviceId = null
 var serviceId = null
 var characteristicId ='6E400002-B5A3-F393-E0A9-E50E24DCCA9E'
 var isRunning = false
 var isConnecting = false
+var last_device_id = null
+wx.getStorage({
+  key: 'last_device_id',
+  success: function(res) {
+      last_device_id = res.data
+  } 
+})
 
 function char2buf(str){
   var out = new ArrayBuffer(str.length);
@@ -100,9 +107,35 @@ function search(that) {
         if (res['devices'][0].RSSI > 0 ) {
           return
         }
-        // if ('3ECDAA79-B231-40BA-B9BB-23AC99B0B6CC' != res['devices'][0].deviceId) {
-        //   return
-        // }
+        if (last_device_id && last_device_id == res['devices'][0].deviceId) {
+          wx.showModal({
+            title: '提示',
+            content: '发现上次连接设备，是否确定进行自动连接？',
+            success: function(res) {
+              if (res.confirm) {
+                wx.stopBluetoothDevicesDiscovery({
+                  success: function (res) {
+                    console.log(res)
+                  }
+                })
+                isConnecting = true
+                wx.showLoading({
+                  title: '自动连接中',
+                })
+                console.log('自动连接中'+last_device_id)
+                connect(last_device_id, that)
+              } else if (res.cancel) {
+                last_device_id = null
+                wx.removeStorage({
+                  key: 'last_device_id',
+                  success: function(res) {
+                    console.log("清除自动连接设备成功"+res)
+                  } 
+                })
+              }
+            }
+          })
+        }
 
         var device_list = that.data.device_list
         var hadFound = false
@@ -261,7 +294,7 @@ pageData.bindSearchButtonTap = function (e) {
 
 pageData.bindButtonTap = function (e) {
   if (!isRunning) {
-    startRunning(deviceId,serviceId,characteristicId,'ES')
+    startRunning(currentDeviceId,serviceId,characteristicId,'ES')
     var data = {
       isRunning : true
     }
@@ -269,23 +302,11 @@ pageData.bindButtonTap = function (e) {
   }
 }
 
-pageData.widgetsToggle = function (e) {
-  //先停止搜索
-  wx.stopBluetoothDevicesDiscovery({
-    success: function (res) {
-      console.log(res)
-    }
-  })
-  isConnecting = true
-  wx.showLoading({
-    title: '连接中',
-  })
-  console.log('连接中'+e.currentTarget.id)
-  var that = this
-
+function connect(deviceId, that) {
+  currentDeviceId = deviceId
   wx.createBLEConnection({
     // 这里的 deviceId 需要在上面的 getBluetoothDevices 或 onBluetoothDeviceFound 接口中获取
-    deviceId: e.currentTarget.id,
+    deviceId: deviceId,
     success: function (res) {
       if(res.errMsg.indexOf("ok") < 0 ) { 
         isConnecting = false
@@ -298,13 +319,13 @@ pageData.widgetsToggle = function (e) {
         })
         return
       } 
-      deviceId = e.currentTarget.id
+
       var data = {device_list:[]}
       data['dataShow'] = true
       that.setData(data)
       wx.getBLEDeviceServices({
         // 这里的 deviceId 需要在上面的 getBluetoothDevices 或 onBluetoothDeviceFound 接口中获取
-        deviceId: e.currentTarget.id,
+        deviceId: deviceId,
         success: function (foundServicesRes) {
           for (var serviceIndex = 0 ; serviceIndex < foundServicesRes.services.length; serviceIndex ++) {
             var service = foundServicesRes.services[serviceIndex]
@@ -312,7 +333,7 @@ pageData.widgetsToggle = function (e) {
               serviceId = service.uuid
               wx.getBLEDeviceCharacteristics({
                 // 这里的 deviceId 需要在上面的 getBluetoothDevices 或 onBluetoothDeviceFound 接口中获取
-                deviceId: e.currentTarget.id,
+                deviceId: deviceId,
                 // 这里的 serviceId 需要在上面的 getBLEDeviceServices 接口中获取
                 serviceId: service.uuid,
                 success: function (foundCharacterRes) {
@@ -320,7 +341,7 @@ pageData.widgetsToggle = function (e) {
                     var charcterRes = foundCharacterRes.characteristics[characterIndex]
                     if (charcterRes.uuid == '6E400002-B5A3-F393-E0A9-E50E24DCCA9E') {
                       writeCharacteristics = charcterRes
-                      // startRunning(e.currentTarget.id, service.uuid, charcterRes.uuid, 'ES')
+                      // startRunning(deviceId, service.uuid, charcterRes.uuid, 'ES')
                       if (isNotify) {
                         that.setData({isConntected:true})
                         isConnecting = false
@@ -335,7 +356,7 @@ pageData.widgetsToggle = function (e) {
                       wx.notifyBLECharacteristicValueChanged({
                         state: true, // 启用 notify 功能
                         // 这里的 deviceId 需要在上面的 getBluetoothDevices 或 onBluetoothDeviceFound 接口中获取
-                        deviceId: e.currentTarget.id,
+                        deviceId: deviceId,
                         // 这里的 serviceId 需要在上面的 getBLEDeviceServices 接口中获取
                         serviceId: service.uuid,
                         // 这里的 characteristicId 需要在上面的 getBLEDeviceCharacteristics 接口中获取
@@ -344,7 +365,7 @@ pageData.widgetsToggle = function (e) {
                           //开启notify成功
                           console.log('notifyBLECharacteristicValueChanged success', res.errMsg)
                           isNotify = true
-                          // startRunning(e.currentTarget.id, service.uuid, charcterRes.uuid, 'E')
+                          // startRunning(deviceId, service.uuid, charcterRes.uuid, 'E')
                           if (writeCharacteristics) {
                             that.setData({isConntected:true})
                             isConnecting = false
@@ -367,7 +388,27 @@ pageData.widgetsToggle = function (e) {
       })
     }
   })
+}
 
+pageData.widgetsToggle = function (e) {
+  //先停止搜索
+  wx.stopBluetoothDevicesDiscovery({
+    success: function (res) {
+      console.log(res)
+    }
+  })
+  isConnecting = true
+  wx.showLoading({
+    title: '连接中',
+  })
+  console.log('连接中'+e.currentTarget.id)
+  var that = this
+  wx.setStorage({
+    key:"last_device_id",
+    data:e.currentTarget.id
+  })
+
+  connect(e.currentTarget.id, that)
 
     // var id = e.currentTarget.id, data = {};
     // for (var i = 0, len = type.length; i < len; ++i) {
