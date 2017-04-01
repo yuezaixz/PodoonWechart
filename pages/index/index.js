@@ -118,14 +118,14 @@ function search(that) {
           if (res['devices'][0].deviceId == device.uuid) {
             hadFound = true
             console.log('更新RSSI:',device.uuid)
-            device_list[deviceIndex].rssi = res['devices'][0].RSSI
+            device_list[deviceIndex].rssi = res['devices'][0].RSSI + 130
           }
         }
         if (!hadFound) {
           if (res['devices'][0].RSSI > -70) {
             device_list.push({
               name:res['devices'][0].name,
-              rssi:res['devices'][0].RSSI,
+              rssi:(res['devices'][0].RSSI+130),
               uuid:res['devices'][0].deviceId
             })
           }

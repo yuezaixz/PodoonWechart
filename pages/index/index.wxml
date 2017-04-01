@@ -14,7 +14,7 @@
             <view class="widgets">
                 <view wx:for="{{device_list}}" class="widgets__item">
                     <view id="{{item.uuid}}" class="widgets__info widgets__info_show" bindtap="widgetsToggle">
-                        <text class="widgets__info-name">{{item.name}}(rssi:{{item.rssi}})</text>
+                        <text class="widgets__info-name">{{item.name}}(信号强度:{{item.rssi}})</text>
                         <image class="widgets__info-img" src="resources/arrow.png" background-size="cover" />
                     </view>
                 </view>
