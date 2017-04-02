@@ -18,7 +18,7 @@ wx.getStorage({
   } 
 })
 
-
+var locationTimer = null
 
 
 // var startTime = 0
@@ -26,7 +26,6 @@ wx.getStorage({
 var startRunning =  function(deviceId, serviceId, characteristicId, value) {
   if (writeCharacteristics && isNotify) {
     // startTime = Date.parse(new Date())
-    setInterval(getLocation,5000)
     wx.writeBLECharacteristicValue({
       // 这里的 deviceId 需要在上面的 getBluetoothDevices 或 onBluetoothDeviceFound 接口中获取
       deviceId: deviceId,
@@ -251,6 +250,38 @@ var pageData = {
           pronationType:pronationType,
         }
         that.setData(data)
+      } else if (footDatas[0] == 5) {
+        var stepCount = footDatas[1]*256*256 + footDatas[2]*256 + footDatas[3]
+        var stepFreq = footDatas[4]*256 + footDatas[5]
+        var gct = footDatas[6]*256 + footDatas[7]
+        var touchTypeEnum = (footDatas[8] & 0xf0) >> 4
+        var pronationTypeEnum = footDatas[8] & 0x0f
+        var sportTime = footDatas[13]*256*256 + footDatas[14]*256 + footDatas[15]
+        var resultUrl = '../result/result?stepCount='+stepCount+'&sportTime='+sportTime+'&distance='+totalDistance+'&gct='+gct+'&touchType='+touchTypeEnum+'&pronationType='+pronationTypeEnum
+        wx.hideLoading()
+
+        wx.closeBLEConnection({
+          deviceId: currentDeviceId,
+          success: function (res) {
+            console.log(res)
+          }
+        })
+
+        //清除状态
+        clearInterval(locationTimer)
+        writeCharacteristics = null
+        isNotify = false
+        currentDeviceId = null
+        serviceId = null
+        isRunning = false
+        isConnecting = false
+        locations = []
+        lastLocation = null
+        totalDistance = 0
+        
+        wx.navigateTo({
+          url: resultUrl
+        })
       }
     })
 
@@ -267,11 +298,19 @@ pageData.bindSearchButtonTap = function (e) {
 
 pageData.bindButtonTap = function (e) {
   if (!isRunning) {
+    locationTimer = setInterval(getLocation,5000)
+    isRunning = true
     startRunning(currentDeviceId,serviceId,characteristicId,'ES')
     var data = {
       isRunning : true
     }
     this.setData(data)
+  } else {
+    console.log("结束运动中")
+    startRunning(currentDeviceId,serviceId,characteristicId,'ET')
+    wx.showLoading({
+      title: '处理中',
+    })
   }
 }
 
