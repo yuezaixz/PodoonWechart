@@ -157,6 +157,11 @@ var pageData = {
     })
   },
   onLoad: function () {
+    // 测试代码
+    // var resultUrl = '../result/result?stepCount='+2+'&sportTime='+2+'&distance='+2+'&gct='+2+'&touchType='+2+'&pronationType='+2
+    // wx.navigateTo({
+    //   url: resultUrl
+    // })
     console.log('onLoad')
     var that = this
 
