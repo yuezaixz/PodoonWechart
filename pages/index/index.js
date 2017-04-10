@@ -359,7 +359,7 @@ function connect(deviceId, that) {
           for (var serviceIndex = 0 ; serviceIndex < foundServicesRes.services.length; serviceIndex ++) {
             var service = foundServicesRes.services[serviceIndex]
             console.log(service.uuid)
-            if (service.uuid == '6E400001-B5A3-F393-E0A9-E50E24DCCA9E' || service.uuid == '00001800-0000-1000-8000-00805f9b34fb') {
+            if (service.uuid == '6E400001-B5A3-F393-E0A9-E50E24DCCA9E') {
               serviceId = service.uuid
               console.log('getBLEDeviceCharacteristics')
               wx.getBLEDeviceCharacteristics({
@@ -372,7 +372,7 @@ function connect(deviceId, that) {
                   console.log(foundCharacterRes)
                   for (var characterIndex = 0 ; characterIndex < foundCharacterRes.characteristics.length ; characterIndex++ ) {
                     var charcterRes = foundCharacterRes.characteristics[characterIndex]
-                    if (charcterRes.uuid == '6E400002-B5A3-F393-E0A9-E50E24DCCA9E' || charcterRes.uuid == '00002a00-0000-1000-8000-00805f9b34fb') {
+                    if (charcterRes.uuid == '6E400002-B5A3-F393-E0A9-E50E24DCCA9E') {
                       console.log('found writeBLECharacteristic')
                       writeCharacteristics = charcterRes
                       // startRunning(deviceId, service.uuid, charcterRes.uuid, 'ES')
