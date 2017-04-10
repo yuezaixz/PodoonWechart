@@ -38,7 +38,7 @@ var pageData = {
     this.setData(data)
   },
   onShareAppMessage: function () {
-    var resultUrl = '../result/result?stepCount='+stepCount+'&sportTime='+sportTime+'&distance='+totalDistance+'&gct='+gct+'&touchType='+touchType+'&pronationType='+pronationType
+    var resultUrl = '/pages/result/result?stepCount='+stepCount+'&sportTime='+sportTime+'&distance='+totalDistance+'&gct='+gct+'&touchType='+touchType+'&pronationType='+pronationType
     return {
       title: '鞋垫检测结果',
       path: resultUrl,
