@@ -74,12 +74,20 @@ function search(that) {
     services: ['00001801-0000-1000-8000-00805F9B34FB'],
     success: function (res2) {
       wx.onBluetoothDeviceFound(function(res) {
-        console.log(res['devices'][0])
-        //测试用过滤代码
-        if (res['devices'][0].RSSI > 0 ) {
+        var foundDevice = null
+        if (res['devices']) {
+          foundDevice = res['devices'][0]
+        } else if (res['deviceId']) {//兼容安卓版本，两个API不一致，很奇葩
+          foundDevice = res
+        } else {
           return
         }
-        if (last_device_id && last_device_id == res['devices'][0].deviceId) {
+        console.log(foundDevice)
+        //测试用过滤代码
+        if (foundDevice.RSSI > 0 ) {
+          return
+        }
+        if (last_device_id && last_device_id == foundDevice.deviceId) {
           wx.showModal({
             title: '提示',
             content: '发现上次连接设备，是否确定进行自动连接？',
@@ -114,18 +122,18 @@ function search(that) {
 
         for(var deviceIndex = 0; deviceIndex < device_list.length; ++deviceIndex) {
           var device = device_list[deviceIndex]
-          if (res['devices'][0].deviceId == device.uuid) {
+          if (foundDevice.deviceId == device.uuid) {
             hadFound = true
             console.log('更新RSSI:',device.uuid)
-            device_list[deviceIndex].rssi = res['devices'][0].RSSI + 130
+            device_list[deviceIndex].rssi = foundDevice.RSSI + 130
           }
         }
         if (!hadFound) {
-          if (res['devices'][0].RSSI > -70) {
+          if (foundDevice.RSSI > -70) {
             device_list.push({
-              name:res['devices'][0].name,
-              rssi:(res['devices'][0].RSSI+130),
-              uuid:res['devices'][0].deviceId
+              name:foundDevice.name,
+              rssi:(foundDevice.RSSI+130),
+              uuid:foundDevice.deviceId
             })
           }
         }
@@ -325,6 +333,8 @@ function connect(deviceId, that) {
     // 这里的 deviceId 需要在上面的 getBluetoothDevices 或 onBluetoothDeviceFound 接口中获取
     deviceId: deviceId,
     success: function (res) {
+      console.log('createBLEConnection callback')
+      console.log(res)
       if(res.errMsg.indexOf("ok") < 0 ) { 
         isConnecting = false
         wx.hideLoading()
@@ -344,19 +354,26 @@ function connect(deviceId, that) {
         // 这里的 deviceId 需要在上面的 getBluetoothDevices 或 onBluetoothDeviceFound 接口中获取
         deviceId: deviceId,
         success: function (foundServicesRes) {
+          console.log('getBLEDeviceServices callback')
+          console.log(foundServicesRes)
           for (var serviceIndex = 0 ; serviceIndex < foundServicesRes.services.length; serviceIndex ++) {
             var service = foundServicesRes.services[serviceIndex]
-            if (service.uuid == '6E400001-B5A3-F393-E0A9-E50E24DCCA9E') {
+            console.log(service.uuid)
+            if (service.uuid == '6E400001-B5A3-F393-E0A9-E50E24DCCA9E' || service.uuid == '00001800-0000-1000-8000-00805f9b34fb') {
               serviceId = service.uuid
+              console.log('getBLEDeviceCharacteristics')
               wx.getBLEDeviceCharacteristics({
                 // 这里的 deviceId 需要在上面的 getBluetoothDevices 或 onBluetoothDeviceFound 接口中获取
                 deviceId: deviceId,
                 // 这里的 serviceId 需要在上面的 getBLEDeviceServices 接口中获取
                 serviceId: service.uuid,
                 success: function (foundCharacterRes) {
+                  console.log('getBLEDeviceCharacteristics callback')
+                  console.log(foundCharacterRes)
                   for (var characterIndex = 0 ; characterIndex < foundCharacterRes.characteristics.length ; characterIndex++ ) {
                     var charcterRes = foundCharacterRes.characteristics[characterIndex]
-                    if (charcterRes.uuid == '6E400002-B5A3-F393-E0A9-E50E24DCCA9E') {
+                    if (charcterRes.uuid == '6E400002-B5A3-F393-E0A9-E50E24DCCA9E' || charcterRes.uuid == '00002a00-0000-1000-8000-00805f9b34fb') {
+                      console.log('found writeBLECharacteristic')
                       writeCharacteristics = charcterRes
                       // startRunning(deviceId, service.uuid, charcterRes.uuid, 'ES')
                       if (isNotify) {
@@ -370,6 +387,7 @@ function connect(deviceId, that) {
                         })
                       }
                     } else {
+                      console.log('notifyBLECharacteristicValueChanged')
                       wx.notifyBLECharacteristicValueChanged({
                         state: true, // 启用 notify 功能
                         // 这里的 deviceId 需要在上面的 getBluetoothDevices 或 onBluetoothDeviceFound 接口中获取
